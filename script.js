@@ -9,28 +9,43 @@
  * 
  */
 
-players = ['Mia', 'Gabby', 'Carter', 'Sarah']
+players = []
 scores = {}
-players.forEach(function(p) {
-    scores[p] = 0;
-}, this);
-
+var sheetId = '1_tPHJtHXFOisVWk5H3WKrg1wsy30SHy_5XDQ35bHmgo';
+var round = 1;    
+var visualization;    
 google.load('visualization', '1', {
     packages: ['table']
 });
-var visualization;
-var sheetId = '1_tPHJtHXFOisVWk5H3WKrg1wsy30SHy_5XDQ35bHmgo';
-var round = 1;
 
-function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
+function init() {
+    $("#board").hide();
+    $("#next-round").hide();
+    handleSetup(function() {
+        loadData();
+    });
 }
+
+function handleSetup(callback) {
+    // todo validate stuff
+    $("#start").click(function (e) {
+        // assigns inputs to global vars cause idgaf
+        var setup = $("#setup");
+        setup.find("#player-setup input").each(function(e) {
+            players.push($(this).val());
+        });
+        players.forEach(function(p) {
+            scores[p] = 0;
+        }, this);
+
+        var re = /spreadsheets\/d\/([^\/]+)/        
+        var sheetUrl = setup.find("#sheet").val();
+        sheetId = re.exec(sheetUrl)[1];
+        $('#setup').hide();
+        callback();
+    });
+}
+
 function displayScores() {
     var scoreDiv = $("#scores")
     scoreDiv.text("")
@@ -40,11 +55,19 @@ function displayScores() {
         newText += '<div class="blue score" id="' + key + '_score">' + key + " = " + scores[key] + "</div>";
     }
     scoreDiv.append(newText)
-
 }
+
 function scoreIt(player, score) {
-    scores[player] += score
-    displayScores()
+    scores[player] += score;
+    displayScores();
+    maybeShowNextRound();
+}
+
+function maybeShowNextRound(board) {
+    board = board || $("#board");
+    if (board.find(".clicked").length == 30 && round == 1) {
+        $("#next-round").show();
+    }
 }
 function getRound() {
     return round;
@@ -58,18 +81,19 @@ function getSheet() {
     }
 }
 
-function drawVisualization() {
+function loadData() {
     var query = new google.visualization.Query('https://spreadsheets.google.com/tq?key=' + sheetId + '&sheet='+ getSheet() + '&output=html&usp=sharing');
     query.setQuery('SELECT A, B, C label A "Topic", B "Question", C "Answer"');
     query.send(handleQueryResponse);
 }
 
 function handleQueryResponse(response) {
+    console.log("handle response")    
+    
     if (response.isError()) {
         alert('There was a problem with your query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
         return;
     }
-    displayScores();
     var data = response.getDataTable();
     var topics = data.getDistinctValues("Topic")
     var tQuestions = {};
@@ -83,7 +107,6 @@ function handleQueryResponse(response) {
             if (currentTopic)   {
                 topic = currentTopic;
             }      
-           // console.log(question, answer, topic)
             var answers = tQuestions[topic]
             if (!answers) {
                 tQuestions[topic] = [{"q": question, "a": answer}]
@@ -94,7 +117,8 @@ function handleQueryResponse(response) {
         }
     }
 
-    var table = $("#table")
+    var board = $("#board")
+    board.text("");
     var topicHtml = '<div class="row">';
     for(id in topics) {
         var topic = topics[id];
@@ -102,8 +126,7 @@ function handleQueryResponse(response) {
             topicHtml += '<div class="col-1 blue">' + topics[id] + '</div>';
         }
     }
-    table.append(topicHtml);
-
+    board.append(topicHtml);
 
     for (i = 0; i < 5; i++) {
         var score = (i + 1) * 100 * round;
@@ -113,20 +136,18 @@ function handleQueryResponse(response) {
             if (topic == null) {
                 continue;
             }
-            //console.log(topic);
             qna = tQuestions[topic][i];
             if (qna) {
-                //console.log(qna);
-                var xIt = '<div class="control">' + topic + ' : ' + score + '<button  id="' + t + '_' + i + '_cancel">cancel</button>'
+                var xIt = '<div class="control"><button  id="' + t + '_' + i + '_cancel">Return</button>'
                 xIt += '<button  id="' + t + '_' + i + '_no-answer">No answer</button></div>'
 
-                var scoreIt = '<br/><br/><br/><div class="ok">Ok ->';
+                var scoreIt = '<br/><br/><br/><div class="ok">Correct! ->';
                 players.forEach(function(player) {
                     scoreIt += '<button onClick=\'scoreIt(\"' + player + '\",' + score + ')\' id="' + t + '_' + i + '_' + player + '_ok">' + player + '</button>' 
                 }, this);
                 scoreIt += "</div>"
 
-                scoreIt += '<div class="not-ok">Not ok ->';
+                scoreIt += '<div class="not-ok">Wrong! ->';
                 players.forEach(function(player) {
                     scoreIt += '<button onClick=\'scoreIt(\"' + player + '\",-' + score + ')\' id="' + t + '_' + i + '_' + player + '_not-ok">' + player + '</button>' 
                 }, this);
@@ -135,9 +156,9 @@ function handleQueryResponse(response) {
                 rowHtml += '<div id="' + t + '_' + i + '" class="col-1 blue score">' + score + '</div>' + questionDiv;
             }
         }
-        table.append(rowHtml);
+        board.append(rowHtml);
     }
-
+    
     $(".question").hide();
     $(".score").click(function() {
         var rootId = this.id;
@@ -145,15 +166,10 @@ function handleQueryResponse(response) {
         var question = $("#" + rootId + "_question");
         
         question.show();
-        //$("#" + this.id).text("")
-        //var sel = "#" + this.id + " .ok"
-        //console.log(sel)
         $("#" + rootId + "_question .ok").click(function(e) {
             rootElement.addClass("clicked")
             question.hide();
-            if ($("#table .clicked").length == 25 && round == 1) {
-                $("#next-round").show();
-            }
+            maybeShowNextRound(board);            
         })
 
         $("#" + rootId + "_cancel").click(function(e) {
@@ -163,9 +179,7 @@ function handleQueryResponse(response) {
         $("#" + rootId + "_no-answer").click(function(e) {
             rootElement.addClass("clicked")
             question.hide();
-            if ($("#table .clicked").length == 30 && round == 1) {
-                $("#next-round").show();
-            }
+            maybeShowNextRound(board);
         });
     })
     $("#next-round").hide();
@@ -175,8 +189,10 @@ function handleQueryResponse(response) {
         $("#next-round").click(function (e) {
             round+=1;
             $("#table").text("")
-            drawVisualization();
+            loadData();
         })
     }
+
+    board.show();
+    displayScores();
 }
-google.setOnLoadCallback(drawVisualization);

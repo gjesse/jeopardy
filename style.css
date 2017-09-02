@@ -49,6 +49,9 @@
     background-color: #333333;
 }
 
+.setup input {
+    width: 50%;
+}
 html {
     font-family: "Lucida Sans", sans-serif;
     color: #FFFFFF;

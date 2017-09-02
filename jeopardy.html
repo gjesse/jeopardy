@@ -11,15 +11,29 @@
 </head>
 <body>
 
-    <div id="table">
-    </div>
+    <div id="setup" class="setup blue">
+        <label for="sheet">Google sheet share url: </label><input type="text" id="sheet" value="https://docs.google.com/spreadsheets/d/1_tPHJtHXFOisVWk5H3WKrg1wsy30SHy_5XDQ35bHmgo/edit?usp=sharing" />
+            <div id="player-setup">
+                <label for="player-0">Player 1 name: </label><input type="text" id="player-0" value="Player 1"/>
+                <br /> 
+                <label for="player-1">Player 2 name: </label><input type="text" id="player-1" value="Player 2" /> 
+                <br /> 
+                <label for="player-2">Player 3 name: </label><input type="text" id="player-1" value="Player 3"/> 
+            </div>
+            <button id="start">start!</button>
+        </div>
+    <div id="board"></div>
     <br />
-    <div id="scores">
-    </div>
+    <div id="scores"></div>
     <div id="next-round">
         <button>Next round</button>
     </div>
 
 </body>
+
+<script type="text/javascript">
+    document.onLoad = init();
+ </script>
+
 </html>
 
