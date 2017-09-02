@@ -13,4 +13,9 @@ make your own jeopardy game using google sheets for data. Clicking on categories
 # caveats
   * There's no 'buzz in' capability. you'll need to figure that out on your own.
   * there's no persistence. reloading the page will reset the game.
-  * there's no daily double 
+  * there's no daily double
+
+# why?
+
+  * our kids wanted to play jeopardy. 
+  * keeping track of the scores, managing the participants and reading the questions was hard to do. This makes it easier. 
