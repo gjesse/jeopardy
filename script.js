@@ -1,14 +1,3 @@
-/*!
- * 
- * Google Sheets To HTML v0.9a
- * 
- * To use, simply replace the "tq?key=" value in the
- * URL below with your own unique Google document ID
- * 
- * The Google document's sharing must be set to public
- * 
- */
-
 players = []
 scores = {}
 var sheetId = '1_tPHJtHXFOisVWk5H3WKrg1wsy30SHy_5XDQ35bHmgo';
